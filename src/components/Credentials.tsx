@@ -176,6 +176,17 @@ export function Credentials() {
     setIsFormOpen(true);
   };
 
+  const handleQuickSEPTASetup = () => {
+    setFormData({
+      name: 'SEPTA',
+      url: 'https://epsadmin.septa.org/vendor/requisitions/list/',
+      username: 'JoeRoot',
+      password: 'Quan999999',
+      isActive: true,
+    });
+    setIsFormOpen(true);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -187,6 +198,12 @@ export function Credentials() {
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             Quick Metro Setup
+          </button>
+          <button
+            onClick={handleQuickSEPTASetup}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            Quick SEPTA Setup
           </button>
           <button
             onClick={() => setIsFormOpen(true)}
