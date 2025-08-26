@@ -1,0 +1,49 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { portalsApi } from '@/lib/api';
+import { Portal } from '@/lib/types';
+import { useAppContext } from '@/contexts/AppContext';
+
+export function usePortals() {
+  const { portals } = useAppContext();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['portals'],
+    queryFn: portalsApi.getAll,
+    initialData: { success: true, data: portals },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: portalsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portals'] });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, portal }: { id: string; portal: Partial<Portal> }) =>
+      portalsApi.update(id, portal),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portals'] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: portalsApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portals'] });
+    },
+  });
+
+  return {
+    portals: query.data?.data || [],
+    isLoading: query.isLoading,
+    error: query.error,
+    createPortal: createMutation.mutate,
+    updatePortal: updateMutation.mutate,
+    deletePortal: deleteMutation.mutate,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+  };
+}
