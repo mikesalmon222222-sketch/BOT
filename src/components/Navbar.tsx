@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { useTodayCount } from '@/hooks/useBidData';
 import { useAppContext } from '@/contexts/AppContext';
 
@@ -9,6 +10,19 @@ export function Navbar() {
   const pathname = usePathname();
   const { data: todayCountData, isLoading } = useTodayCount();
   const { portals } = useAppContext();
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+
+  // Set the time after hydration to avoid hydration mismatch
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleTimeString());
+    
+    // Update time every minute
+    const interval = setInterval(() => {
+      setLastUpdated(new Date().toLocaleTimeString());
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     {
@@ -83,7 +97,7 @@ export function Navbar() {
         <div className="text-xs text-gray-500">
           <div>Active Portals: {portals.filter(p => p.isActive).length}</div>
           <div className="mt-1">
-            Last Updated: {new Date().toLocaleTimeString()}
+            Last Updated: {lastUpdated || 'Loading...'}
           </div>
         </div>
       </div>

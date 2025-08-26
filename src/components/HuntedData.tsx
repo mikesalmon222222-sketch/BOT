@@ -1,15 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useHuntedData, useRefreshHuntedData } from '@/hooks/useBidData';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function HuntedData() {
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const queryClient = useQueryClient();
+  
+  // Set the date after hydration to avoid hydration mismatch
+  useEffect(() => {
+    setSelectedDate(new Date().toISOString().split('T')[0]);
+  }, []);
   
   const { data, isLoading, error } = useHuntedData(selectedDate);
   const refreshMutation = useRefreshHuntedData();
+
+  // Auto-refresh every 15 minutes
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      // Silent background refresh
+      await queryClient.invalidateQueries({ queryKey: ['huntedData'] });
+      await queryClient.invalidateQueries({ queryKey: ['todayCount'] });
+    }, 15 * 60 * 1000); // 15 minutes
+
+    return () => clearInterval(interval);
+  }, [queryClient]);
 
   const handleRefresh = () => {
     refreshMutation.mutate();
