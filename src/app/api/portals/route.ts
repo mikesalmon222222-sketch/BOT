@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Portal } from '@/lib/types';
-import { mockData } from '@/lib/api';
-
-// Mock in-memory storage (in real app, this would be a database)
-let portals: Portal[] = [...mockData.portals];
+import { bidDataStore } from '@/lib/data-store';
 
 export async function GET() {
   try {
+    const portals = bidDataStore.getPortals();
+    
     return NextResponse.json({
       success: true,
       data: portals,
@@ -33,7 +32,7 @@ export async function POST(request: NextRequest) {
       bidCount: 0,
     };
 
-    portals.push(newPortal);
+    bidDataStore.addPortal(newPortal);
 
     return NextResponse.json({
       success: true,

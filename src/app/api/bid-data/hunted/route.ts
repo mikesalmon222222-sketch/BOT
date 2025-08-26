@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HuntedDataResponse } from '@/lib/types';
-import { mockData } from '@/lib/api';
+import { bidDataStore } from '@/lib/data-store';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
     
-    // Filter mock data by date if provided
-    let filteredBids = mockData.bidData;
+    // Get bids by date if provided, otherwise get all bids
+    let filteredBids = bidDataStore.getBids();
     
     if (date) {
       const targetDate = new Date(date);
-      filteredBids = mockData.bidData.filter(bid => {
-        const bidDate = new Date(bid.dateHunted);
-        return bidDate.toDateString() === targetDate.toDateString();
-      });
+      filteredBids = bidDataStore.getBidsByDate(targetDate);
     }
 
     const huntedData: HuntedDataResponse = {

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Portal } from '@/lib/types';
-import { mockData } from '@/lib/api';
-
-// Mock in-memory storage (in real app, this would be a database)
-let portals: Portal[] = [...mockData.portals];
+import { bidDataStore } from '@/lib/data-store';
 
 export async function PUT(
   request: NextRequest,
@@ -13,8 +10,12 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     
-    const portalIndex = portals.findIndex(p => p.id === id);
-    if (portalIndex === -1) {
+    const updatedPortal = bidDataStore.updatePortal(id, {
+      ...body,
+      lastSync: new Date(),
+    });
+
+    if (!updatedPortal) {
       return NextResponse.json(
         {
           success: false,
@@ -24,15 +25,9 @@ export async function PUT(
       );
     }
 
-    portals[portalIndex] = {
-      ...portals[portalIndex],
-      ...body,
-      lastSync: new Date(),
-    };
-
     return NextResponse.json({
       success: true,
-      data: portals[portalIndex],
+      data: updatedPortal,
     });
   } catch (error) {
     console.error('Error updating portal:', error);
@@ -53,8 +48,9 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    const portalIndex = portals.findIndex(p => p.id === id);
-    if (portalIndex === -1) {
+    const deleted = bidDataStore.deletePortal(id);
+
+    if (!deleted) {
       return NextResponse.json(
         {
           success: false,
@@ -63,8 +59,6 @@ export async function DELETE(
         { status: 404 }
       );
     }
-
-    portals.splice(portalIndex, 1);
 
     return NextResponse.json({
       success: true,
