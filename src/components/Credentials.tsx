@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePortals } from '@/hooks/usePortals';
 import { Portal, PortalFormData } from '@/lib/types';
+import { portalsApi, bidsApi } from '@/lib/api';
 
 export function Credentials() {
   const {
@@ -17,6 +18,11 @@ export function Credentials() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPortal, setEditingPortal] = useState<Portal | null>(null);
+  const [testingConnection, setTestingConnection] = useState<string | null>(null);
+  const [scrapingPortal, setScrapingPortal] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<{ [key: string]: { success: boolean; message: string } }>({});
+  const [scrapingResults, setScrapingResults] = useState<{ [key: string]: { success: boolean; message: string; count?: number } }>({});
+  
   const [formData, setFormData] = useState<PortalFormData>({
     name: '',
     url: '',
@@ -24,6 +30,72 @@ export function Credentials() {
     password: '',
     isActive: true,
   });
+
+  const handleTestConnection = async (portal: Portal) => {
+    setTestingConnection(portal.id);
+    setTestResults(prev => ({ ...prev, [portal.id]: { success: false, message: 'Testing...' } }));
+
+    try {
+      const response = await portalsApi.testConnection(portal.id, {
+        username: portal.username,
+        password: portal.password,
+      });
+
+      if (response.success) {
+        setTestResults(prev => ({
+          ...prev,
+          [portal.id]: { success: true, message: response.data?.message || 'Connection successful' }
+        }));
+      } else {
+        setTestResults(prev => ({
+          ...prev,
+          [portal.id]: { success: false, message: response.error || 'Connection failed' }
+        }));
+      }
+    } catch (error) {
+      setTestResults(prev => ({
+        ...prev,
+        [portal.id]: { success: false, message: 'Connection test failed' }
+      }));
+    } finally {
+      setTestingConnection(null);
+    }
+  };
+
+  const handleScrapePortal = async (portal: Portal) => {
+    setScrapingPortal(portal.id);
+    setScrapingResults(prev => ({ ...prev, [portal.id]: { success: false, message: 'Scraping...' } }));
+
+    try {
+      const response = await bidsApi.fetchFromPortal(portal.id, {
+        username: portal.username,
+        password: portal.password,
+      });
+
+      if (response.success) {
+        setScrapingResults(prev => ({
+          ...prev,
+          [portal.id]: { 
+            success: true, 
+            message: response.data?.message || 'Scraping successful',
+            count: response.data?.total || 0
+          }
+        }));
+      } else {
+        setScrapingResults(prev => ({
+          ...prev,
+          [portal.id]: { success: false, message: response.error || 'Scraping failed' }
+        }));
+      }
+    } catch (error) {
+      setScrapingResults(prev => ({
+        ...prev,
+        [portal.id]: { success: false, message: 'Scraping failed' }
+      }));
+    } finally {
+      setScrapingPortal(null);
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -84,17 +156,36 @@ export function Credentials() {
     });
   };
 
+  const handleQuickMetroSetup = () => {
+    setFormData({
+      name: 'Metro',
+      url: 'https://business.metro.net/webcenter/portal/VendorPortal/pages_home/solicitations/openSolicitations',
+      username: '',
+      password: '',
+      isActive: true,
+    });
+    setIsFormOpen(true);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Portal Credentials</h1>
         
-        <button
-          onClick={() => setIsFormOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Add New Portal
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleQuickMetroSetup}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            Quick Metro Setup
+          </button>
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Add New Portal
+          </button>
+        </div>
       </div>
 
       {/* Portal Form Modal */}
@@ -222,6 +313,9 @@ export function Credentials() {
                     Bid Count
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Connection
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -261,20 +355,53 @@ export function Credentials() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{portal.bidCount || 0}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => handleEdit(portal)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(portal.id)}
-                        disabled={isDeleting}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() => handleTestConnection(portal)}
+                          disabled={testingConnection === portal.id}
+                          className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 disabled:opacity-50"
+                        >
+                          {testingConnection === portal.id ? 'Testing...' : 'Test'}
+                        </button>
+                        {testResults[portal.id] && (
+                          <div className={`text-xs ${testResults[portal.id].success ? 'text-green-600' : 'text-red-600'}`}>
+                            {testResults[portal.id].message}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEdit(portal)}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(portal.id)}
+                            disabled={isDeleting}
+                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => handleScrapePortal(portal)}
+                          disabled={scrapingPortal === portal.id || !portal.isActive}
+                          className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded hover:bg-green-200 disabled:opacity-50"
+                        >
+                          {scrapingPortal === portal.id ? 'Scraping...' : 'Scrape Now'}
+                        </button>
+                        {scrapingResults[portal.id] && (
+                          <div className={`text-xs ${scrapingResults[portal.id].success ? 'text-green-600' : 'text-red-600'}`}>
+                            {scrapingResults[portal.id].message}
+                            {scrapingResults[portal.id].count !== undefined && ` (${scrapingResults[portal.id].count} bids)`}
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

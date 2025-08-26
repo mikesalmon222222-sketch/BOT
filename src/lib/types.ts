@@ -8,9 +8,21 @@ export interface Portal {
   isActive: boolean;
   lastSync?: Date;
   bidCount?: number;
+  // Enhanced portal configuration
+  baseUrl?: string;
+  bidsUrl?: string;
+  scraperType?: 'playwright' | 'cheerio';
+  lastScraped?: Date;
 }
 
-// Bid data interface
+// Document interface for bid attachments
+export interface Document {
+  name: string;
+  url: string;
+  type?: string;
+}
+
+// Enhanced bid data interface for real scraping
 export interface BidData {
   id: string;
   title: string;
@@ -22,6 +34,32 @@ export interface BidData {
   url: string;
   dateHunted: Date;
   status: 'active' | 'expired' | 'closed';
+  // Enhanced bid fields
+  postedDate?: Date;
+  expirationDate?: Date;
+  quantity?: string;
+  documents?: Document[];
+  sourceUrl: string;
+  fetchedAt: Date;
+}
+
+// Credentials interface for scraper authentication
+export interface Credentials {
+  username: string;
+  password: string;
+}
+
+// Bid details interface for detailed scraping
+export interface BidDetails {
+  id: string;
+  title: string;
+  description: string;
+  quantity?: string;
+  postedDate?: Date;
+  expirationDate: Date;
+  documents: Document[];
+  sourceUrl: string;
+  amount?: number;
 }
 
 // API response interfaces

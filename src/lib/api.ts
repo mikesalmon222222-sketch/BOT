@@ -45,6 +45,17 @@ export const huntedDataApi = {
   refresh: () => apiCall<HuntedDataResponse>('/bid-data/refresh'),
 };
 
+// Enhanced bids API
+export const bidsApi = {
+  getAll: () => apiCall<HuntedDataResponse>('/bids'),
+  fetchFromPortal: (portalId: string, credentials?: { username: string; password: string }) =>
+    apiCall<{ bids: BidData[]; total: number; portal: string; message: string }>('/bids/fetch', {
+      method: 'POST',
+      body: JSON.stringify({ portalId, credentials }),
+    }),
+  getTodayCount: () => apiCall<TodayCountResponse>('/bids/today'),
+};
+
 // Portals API
 export const portalsApi = {
   getAll: () => apiCall<Portal[]>('/portals'),
@@ -62,30 +73,33 @@ export const portalsApi = {
     apiCall<void>(`/portals/${id}`, {
       method: 'DELETE',
     }),
+  scrape: (portalId: string, credentials?: { username: string; password: string }) =>
+    apiCall<{ bids: BidData[]; total: number; portal: string; message: string }>('/portals/scrape', {
+      method: 'POST',
+      body: JSON.stringify({ portalId, credentials }),
+    }),
+  testConnection: (portalId: string, credentials?: { username: string; password: string }) =>
+    apiCall<{ portal: string; status: string; message: string }>('/portals/test', {
+      method: 'POST',
+      body: JSON.stringify({ portalId, credentials }),
+    }),
 };
 
-// Mock data for development
+// Mock data for development (kept for backward compatibility)
 export const mockData = {
   portals: [
     {
       id: '1',
       name: 'Metro',
-      url: 'https://metro.gov/bids',
-      username: 'user1',
-      password: '****',
+      url: 'https://business.metro.net/webcenter/portal/VendorPortal/pages_home/solicitations/openSolicitations',
+      baseUrl: 'https://business.metro.net',
+      bidsUrl: 'https://business.metro.net/webcenter/portal/VendorPortal/pages_home/solicitations/openSolicitations',
+      username: '',
+      password: '',
       isActive: true,
+      scraperType: 'playwright' as const,
       lastSync: new Date(),
-      bidCount: 15,
-    },
-    {
-      id: '2',
-      name: 'OhioBuys',
-      url: 'https://ohiobuys.gov',
-      username: 'user2',
-      password: '****',
-      isActive: true,
-      lastSync: new Date(),
-      bidCount: 8,
+      bidCount: 0,
     },
   ] as Portal[],
 
@@ -99,20 +113,10 @@ export const mockData = {
       portalId: '1',
       portalName: 'Metro',
       url: 'https://metro.gov/bids/1',
+      sourceUrl: 'https://metro.gov/bids/1',
       dateHunted: new Date(),
-      status: 'active',
-    },
-    {
-      id: '2',
-      title: 'IT Equipment Purchase',
-      description: 'Computer and server procurement',
-      amount: 25000,
-      deadline: new Date('2024-02-20'),
-      portalId: '2',
-      portalName: 'OhioBuys',
-      url: 'https://ohiobuys.gov/bid/2',
-      dateHunted: new Date(),
-      status: 'active',
+      fetchedAt: new Date(),
+      status: 'active' as const,
     },
   ] as BidData[],
 };
