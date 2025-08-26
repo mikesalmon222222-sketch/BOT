@@ -65,7 +65,8 @@ export async function POST(request: NextRequest) {
           bids: result.bids,
           total: result.bids.length,
           portal: portal.name,
-          message: result.message,
+          // Remove message for silent operation
+          // message: result.message,
         },
       });
     } else {

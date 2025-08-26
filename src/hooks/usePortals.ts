@@ -4,7 +4,7 @@ import { Portal } from '@/lib/types';
 import { useAppContext } from '@/contexts/AppContext';
 
 export function usePortals() {
-  const { portals, setPortals } = useAppContext();
+  const { portals, addPortal, updatePortal: updatePortalInContext, deletePortal: deletePortalFromContext } = useAppContext();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -19,7 +19,7 @@ export function usePortals() {
       queryClient.invalidateQueries({ queryKey: ['portals'] });
       // Also update the AppContext to keep it in sync
       if (response.success && response.data) {
-        setPortals(prev => [...prev, response.data]);
+        addPortal(response.data);
       }
     },
   });
@@ -31,9 +31,7 @@ export function usePortals() {
       queryClient.invalidateQueries({ queryKey: ['portals'] });
       // Also update the AppContext to keep it in sync
       if (response.success) {
-        setPortals(prev =>
-          prev.map(p => p.id === id ? { ...p, ...portal } : p)
-        );
+        updatePortalInContext(id, portal);
       }
     },
   });
@@ -44,7 +42,7 @@ export function usePortals() {
       queryClient.invalidateQueries({ queryKey: ['portals'] });
       // Also update the AppContext to keep it in sync
       if (response.success) {
-        setPortals(prev => prev.filter(p => p.id !== id));
+        deletePortalFromContext(id);
       }
     },
   });

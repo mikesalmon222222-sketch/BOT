@@ -42,7 +42,9 @@ export const huntedDataApi = {
   getByDate: (date: string) => 
     apiCall<HuntedDataResponse>(`/bid-data/hunted?date=${date}`),
   getAll: () => apiCall<HuntedDataResponse>('/bid-data/hunted'),
-  refresh: () => apiCall<HuntedDataResponse>('/bid-data/refresh'),
+  refresh: () => apiCall<HuntedDataResponse>('/bid-data/refresh', {
+    method: 'POST',
+  }),
 };
 
 // Enhanced bids API

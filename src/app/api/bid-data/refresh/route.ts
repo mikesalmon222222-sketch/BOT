@@ -94,7 +94,8 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       data: huntedData,
-      message: `Data refreshed successfully. ${successfulScrapes}/${portals.length} portals scraped, ${totalNewBids} new bids found.`,
+      // Remove message for silent operation
+      // message: `Data refreshed successfully. ${successfulScrapes}/${portals.length} portals scraped, ${totalNewBids} new bids found.`,
       scrapingResults,
     });
   } catch (error) {
