@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Portal, AppContextType } from '@/lib/types';
-import { mockData } from '@/lib/api';
+import { portalsApi } from '@/lib/api';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -10,8 +10,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [portals, setPortals] = useState<Portal[]>([]);
 
   useEffect(() => {
-    // Initialize with mock data for development
-    setPortals(mockData.portals);
+    // Fetch real portal data from API instead of using mock data
+    const fetchPortals = async () => {
+      try {
+        const response = await portalsApi.getAll();
+        if (response.success && response.data) {
+          setPortals(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch portals:', error);
+        // Fallback to empty array on error
+        setPortals([]);
+      }
+    };
+
+    fetchPortals();
   }, []);
 
   const addPortal = (portal: Portal) => {

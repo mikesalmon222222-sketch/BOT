@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePortals } from '@/hooks/usePortals';
 import { Portal, PortalFormData } from '@/lib/types';
 import { portalsApi, bidsApi } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function Credentials() {
   const {
@@ -15,6 +16,8 @@ export function Credentials() {
     isUpdating,
     isDeleting,
   } = usePortals();
+
+  const queryClient = useQueryClient();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPortal, setEditingPortal] = useState<Portal | null>(null);
@@ -81,6 +84,12 @@ export function Credentials() {
             count: response.data?.total || 0
           }
         }));
+        
+        // Critical: Invalidate all relevant caches after successful scraping
+        queryClient.invalidateQueries({ queryKey: ['huntedData'] });
+        queryClient.invalidateQueries({ queryKey: ['todayCount'] });
+        queryClient.invalidateQueries({ queryKey: ['portals'] });
+        queryClient.invalidateQueries({ queryKey: ['bids'] });
       } else {
         setScrapingResults(prev => ({
           ...prev,
