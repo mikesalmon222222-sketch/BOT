@@ -4,7 +4,7 @@ import { Portal } from '@/lib/types';
 import { useAppContext } from '@/contexts/AppContext';
 
 export function usePortals() {
-  const { portals } = useAppContext();
+  const { portals, setPortals } = useAppContext();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -15,23 +15,37 @@ export function usePortals() {
 
   const createMutation = useMutation({
     mutationFn: portalsApi.create,
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['portals'] });
+      // Also update the AppContext to keep it in sync
+      if (response.success && response.data) {
+        setPortals(prev => [...prev, response.data]);
+      }
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, portal }: { id: string; portal: Partial<Portal> }) =>
       portalsApi.update(id, portal),
-    onSuccess: () => {
+    onSuccess: (response, { id, portal }) => {
       queryClient.invalidateQueries({ queryKey: ['portals'] });
+      // Also update the AppContext to keep it in sync
+      if (response.success) {
+        setPortals(prev =>
+          prev.map(p => p.id === id ? { ...p, ...portal } : p)
+        );
+      }
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: portalsApi.delete,
-    onSuccess: () => {
+    onSuccess: (response, id) => {
       queryClient.invalidateQueries({ queryKey: ['portals'] });
+      // Also update the AppContext to keep it in sync
+      if (response.success) {
+        setPortals(prev => prev.filter(p => p.id !== id));
+      }
     },
   });
 

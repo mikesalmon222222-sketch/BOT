@@ -1,6 +1,7 @@
 import { BaseScraper, ScrapingOptions } from './base-scraper';
 import { MetroScraper } from './metro-scraper';
 import { DemoScraper } from './demo-scraper';
+import { SEPTAScraper } from './septa-scraper';
 import { Portal } from '../types';
 
 export class ScraperFactory {
@@ -10,6 +11,9 @@ export class ScraperFactory {
         // Always use DemoScraper for now since we can't install Playwright browsers in this environment
         console.log('Using demo scraper for Metro portal (Playwright not available in this environment)');
         return new DemoScraper(portal, options);
+      case 'septa':
+        console.log('Using SEPTA scraper for SEPTA vendor portal');
+        return new SEPTAScraper(portal, options);
       // Future scrapers can be added here
       // case 'ohiobuys':
       //   return new OhioBuysScraper(portal, options);
@@ -21,14 +25,14 @@ export class ScraperFactory {
   }
 
   static getSupportedPortals(): string[] {
-    return ['metro', 'demo']; // Add more as they're implemented
+    return ['metro', 'septa', 'demo']; // Add more as they're implemented
   }
 
   static isPortalSupported(portalName: string): boolean {
-    return true; // Always supported via demo scraper
+    return true; // Always supported via demo scraper or specific scrapers
   }
 }
 
 // Export for easy access
-export { BaseScraper, MetroScraper, DemoScraper };
+export { BaseScraper, MetroScraper, DemoScraper, SEPTAScraper };
 export type { ScrapingResult, ScrapingOptions } from './base-scraper';

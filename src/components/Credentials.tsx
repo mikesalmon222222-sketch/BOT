@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePortals } from '@/hooks/usePortals';
 import { Portal, PortalFormData } from '@/lib/types';
 import { portalsApi, bidsApi } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function Credentials() {
   const {
@@ -15,6 +16,8 @@ export function Credentials() {
     isUpdating,
     isDeleting,
   } = usePortals();
+
+  const queryClient = useQueryClient();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPortal, setEditingPortal] = useState<Portal | null>(null);
@@ -81,6 +84,12 @@ export function Credentials() {
             count: response.data?.total || 0
           }
         }));
+        
+        // Critical: Invalidate all relevant caches after successful scraping
+        queryClient.invalidateQueries({ queryKey: ['huntedData'] });
+        queryClient.invalidateQueries({ queryKey: ['todayCount'] });
+        queryClient.invalidateQueries({ queryKey: ['portals'] });
+        queryClient.invalidateQueries({ queryKey: ['bids'] });
       } else {
         setScrapingResults(prev => ({
           ...prev,
@@ -167,6 +176,17 @@ export function Credentials() {
     setIsFormOpen(true);
   };
 
+  const handleQuickSEPTASetup = () => {
+    setFormData({
+      name: 'SEPTA',
+      url: 'https://epsadmin.septa.org/vendor/requisitions/list/',
+      username: 'JoeRoot',
+      password: 'Quan999999',
+      isActive: true,
+    });
+    setIsFormOpen(true);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -178,6 +198,12 @@ export function Credentials() {
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             Quick Metro Setup
+          </button>
+          <button
+            onClick={handleQuickSEPTASetup}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            Quick SEPTA Setup
           </button>
           <button
             onClick={() => setIsFormOpen(true)}
